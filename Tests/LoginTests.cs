@@ -22,7 +22,6 @@ public class LoginTests : PageTest
     {
         await _loginPage.LoginAsync("standard_user", "secret_sauce");
         
-        // After successful login, we expect to be redirected to the inventory page
         await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("inventory.html"));
         
         var inventoryContainer = Page.Locator(".inventory_container");

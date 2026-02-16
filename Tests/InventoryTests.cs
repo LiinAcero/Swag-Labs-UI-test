@@ -38,13 +38,11 @@ public class InventoryTests : PageTest
 
             await _inventoryPage.ClickItemNameAsync(i);
 
-            // Verify visibility
             if (!await _itemDetailsPage.IsNameVisibleAsync()) issues.Add($"{itemName}: Name not visible");
             if (!await _itemDetailsPage.IsDescriptionVisibleAsync()) issues.Add($"{itemName}: Description not visible");
             if (!await _itemDetailsPage.IsPriceVisibleAsync()) issues.Add($"{itemName}: Price not visible");
             if (!await _itemDetailsPage.IsImageVisibleAsync()) issues.Add($"{itemName}: Image not visible");
 
-            // Verify audio descriptor (alt text)
             string? altText = await _itemDetailsPage.GetImageAltAsync();
             if (string.IsNullOrWhiteSpace(altText))
             {
@@ -55,7 +53,6 @@ public class InventoryTests : PageTest
                 TestContext.WriteLine($"{itemName} alt text: {altText}");
             }
 
-            // Verify font
             string nameFont = await _itemDetailsPage.GetNameFontFamilyAsync();
             string descFont = await _itemDetailsPage.GetDescriptionFontFamilyAsync();
             string priceFont = await _itemDetailsPage.GetPriceFontFamilyAsync();
@@ -81,6 +78,76 @@ public class InventoryTests : PageTest
         var expectedItems = new[] { "All Items", "About", "Logout", "Reset App State" };
         
         Assert.That(menuItems, Is.EquivalentTo(expectedItems), "Sidebar menu should contain all expected items.");
+    }
+
+    [Test]
+    public async Task VerifySidebarLogoutTest()
+    {
+        await _inventoryPage.OpenMenuAsync();
+        await _inventoryPage.ClickLogoutAsync();
+        
+        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("https://www.saucedemo.com/"));
+        var loginButton = Page.Locator("[data-test=\"login-button\"]");
+        await Expect(loginButton).ToBeVisibleAsync();
+    }
+
+    [Test]
+    public async Task VerifySidebarAboutTest()
+    {
+        await _inventoryPage.OpenMenuAsync();
+        await _inventoryPage.ClickAboutAsync();
+        
+        Assert.That(Page.Url, Does.Contain("saucelabs.com"));
+    }
+
+    [Test]
+    public async Task VerifySidebarAllItemsTest()
+    {
+        await _inventoryPage.ClickItemNameAsync(0);
+        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("inventory-item.html"));
+        
+        await _inventoryPage.OpenMenuAsync();
+        await _inventoryPage.ClickAllItemsAsync();
+        
+        await Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("inventory.html"));
+    }
+
+    [Test]
+    public async Task VerifySidebarResetAppStateTest()
+    {
+        await _inventoryPage.AddItemToCartAsync(0);
+        var badgeText = await _inventoryPage.GetCartBadgeTextAsync();
+        Assert.That(badgeText, Is.EqualTo("1"), "Cart should have 1 item.");
+
+        await _inventoryPage.OpenMenuAsync();
+        await _inventoryPage.ResetAppStateAsync();
+        
+        var badgeTextAfter = await _inventoryPage.GetCartBadgeTextAsync();
+        Assert.That(badgeTextAfter, Is.Null, "Cart should be empty after reset.");
+    }
+
+    [Test]
+    public async Task VerifyAllItemsAccessibilityAndAvailabilityTest()
+    {
+        int itemCount = await _inventoryPage.GetItemCountAsync();
+        Assert.That(itemCount, Is.GreaterThan(0));
+
+        for (int i = 0; i < itemCount; i++)
+        {
+            var item = Page.Locator(".inventory_item").Nth(i);
+            
+            var addToCartButton = item.Locator("button:has-text(\"Add to cart\")");
+            await Expect(addToCartButton).ToBeVisibleAsync();
+            await Expect(addToCartButton).ToBeEnabledAsync();
+
+            var nameLink = item.Locator(".inventory_item_name");
+            await Expect(nameLink).ToBeVisibleAsync();
+            var tagName = await nameLink.EvaluateAsync<string>("el => el.tagName");
+            
+            var img = item.Locator("img.inventory_item_img");
+            string? alt = await img.GetAttributeAsync("alt");
+            Assert.That(alt, Is.Not.Null.And.Not.Empty, $"Item {i} image missing alt text");
+        }
     }
 
     [Test]
