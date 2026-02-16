@@ -10,6 +10,8 @@ public class ItemDetailsPage
     private readonly ILocator _itemPrice;
     private readonly ILocator _itemImage;
     private readonly ILocator _backToProductsButton;
+    private readonly ILocator _addToCartButton;
+    private readonly ILocator _cartLink;
 
     public ItemDetailsPage(IPage page)
     {
@@ -19,6 +21,8 @@ public class ItemDetailsPage
         _itemPrice = page.Locator(".inventory_details_price");
         _itemImage = page.Locator(".inventory_details_img");
         _backToProductsButton = page.Locator("[data-test=\"back-to-products\"]");
+        _addToCartButton = page.Locator(".btn_inventory");
+        _cartLink = page.Locator(".shopping_cart_link");
     }
 
     public async Task<string> GetNameAsync() => await _itemName.InnerTextAsync();
@@ -39,4 +43,10 @@ public class ItemDetailsPage
     {
         await _backToProductsButton.ClickAsync();
     }
+
+    public async Task AddToCartAsync() => await _addToCartButton.ClickAsync();
+
+    public async Task<string> GetAddToCartButtonTextAsync() => await _addToCartButton.InnerTextAsync();
+
+    public async Task ClickCartAsync() => await _cartLink.ClickAsync();
 }

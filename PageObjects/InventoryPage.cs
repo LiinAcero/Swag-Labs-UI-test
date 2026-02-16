@@ -16,6 +16,7 @@ public class InventoryPage
     private readonly ILocator _logoutLink;
     private readonly ILocator _resetAppStateLink;
     private readonly ILocator _cartBadge;
+    private readonly ILocator _cartLink;
 
     public InventoryPage(IPage page)
     {
@@ -31,6 +32,7 @@ public class InventoryPage
         _logoutLink = page.Locator("#logout_sidebar_link");
         _resetAppStateLink = page.Locator("#reset_sidebar_link");
         _cartBadge = page.Locator(".shopping_cart_badge");
+        _cartLink = page.Locator(".shopping_cart_link");
     }
 
     public async Task OpenMenuAsync()
@@ -90,6 +92,18 @@ public class InventoryPage
     {
         await _inventoryItems.Nth(index).Locator("button:has-text(\"Add to cart\")").ClickAsync();
     }
+
+    public async Task RemoveItemFromCartAsync(int index)
+    {
+        await _inventoryItems.Nth(index).Locator("button:has-text(\"Remove\")").ClickAsync();
+    }
+
+    public async Task<string> GetAddToCartButtonTextAsync(int index)
+    {
+        return await _inventoryItems.Nth(index).Locator(".btn_inventory").InnerTextAsync();
+    }
+
+    public async Task ClickCartAsync() => await _cartLink.ClickAsync();
 
     public async Task<string?> GetCartBadgeTextAsync()
     {
