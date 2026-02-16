@@ -69,4 +69,41 @@ public class InventoryTests : PageTest
             Assert.Fail("Issues found:\n" + string.Join("\n", issues));
         }
     }
+
+    [Test]
+    public async Task VerifySidebarMenuTest()
+    {
+        await _inventoryPage.OpenMenuAsync();
+        
+        Assert.That(await _inventoryPage.IsMenuVisibleAsync(), Is.True, "Sidebar menu should be visible after clicking the menu button.");
+        
+        var menuItems = await _inventoryPage.GetMenuItemsAsync();
+        var expectedItems = new[] { "All Items", "About", "Logout", "Reset App State" };
+        
+        Assert.That(menuItems, Is.EquivalentTo(expectedItems), "Sidebar menu should contain all expected items.");
+    }
+
+    [Test]
+    [TestCase("az", "Name (A to Z)")]
+    [TestCase("za", "Name (Z to A)")]
+    [TestCase("lohi", "Price (low to high)")]
+    [TestCase("hilo", "Price (high to low)")]
+    public async Task VerifySortingTest(string sortOption, string description)
+    {
+        TestContext.WriteLine($"Testing sort option: {description} ({sortOption})");
+        await _inventoryPage.SelectSortOptionAsync(sortOption);
+
+        if (sortOption == "az" || sortOption == "za")
+        {
+            var names = await _inventoryPage.GetAllItemNamesAsync();
+            var sortedNames = sortOption == "az" ? names.OrderBy(n => n).ToList() : names.OrderByDescending(n => n).ToList();
+            Assert.That(names, Is.EqualTo(sortedNames), $"Items should be sorted by name {sortOption}.");
+        }
+        else if (sortOption == "lohi" || sortOption == "hilo")
+        {
+            var prices = await _inventoryPage.GetAllItemPricesAsync();
+            var sortedPrices = sortOption == "lohi" ? prices.OrderBy(p => p).ToList() : prices.OrderByDescending(p => p).ToList();
+            Assert.That(prices, Is.EqualTo(sortedPrices), $"Items should be sorted by price {sortOption}.");
+        }
+    }
 }
